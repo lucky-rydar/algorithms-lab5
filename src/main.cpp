@@ -1,18 +1,21 @@
-#include <SFML/Audio.hpp>
-#include <SFML/Graphics.hpp>
-int main()
-{
-    sf::RenderWindow window(sf::VideoMode(800, 600), "SFML window");
-    while (window.isOpen())
-    {
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
-        }
+#include <iostream>
 
-        window.clear();
-        window.display();
+#include "GameState.hpp"
+
+using namespace std;
+
+int main() {
+  GameState gs;
+  gs.printState();
+
+  for (int i = 0; i < 1000; i++) {
+    int hole_num = rand() % 5;
+    if (hole_num == 2) {
+      gs.moveNext(hole_num, Direction(rand() % 2));
+    } else {
+      gs.moveNext(hole_num, Auto);
     }
+
+    gs.printState();
+  }
 }
