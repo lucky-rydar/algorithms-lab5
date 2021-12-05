@@ -170,4 +170,20 @@ class GameState {
 
     cout << endl << endl;
   }
+
+  vector<int> getAiHoles() {
+      return ai_holes;
+  }
+
+  vector<int> getMyHoles() {
+      return my_holes;
+  }
+
+  int getAiScore() {
+      return ai_win_hole;
+  }
+
+  int getMyScore() {
+      return my_win_hole;
+  }
 };
