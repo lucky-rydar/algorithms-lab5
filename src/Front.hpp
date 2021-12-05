@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <functional>
 
 #include "GameState.hpp"
 
@@ -31,6 +32,8 @@ private:
     sf::RectangleShape bottom_panel;
 
     Font font;
+
+    bool game_end = false;
 public:
     Front(int x = 150, float border = -2, float font_size = 50) {
         font.loadFromFile(font_path);
@@ -103,6 +106,12 @@ public:
             {
                 if (event.type == sf::Event::Closed)
                     window.close();
+                else if(event.type == sf::Event::MouseButtonReleased) {
+                    if(event.mouseButton.button == Mouse::Left) {
+                        Mouse m;
+                        mouseLeftButtonReleased({m.getPosition(window).x, m.getPosition(window).y});
+                    }
+                }
             }
 
             // do updates here
@@ -132,15 +141,86 @@ public:
         return 0;
     }
 
+private:
     void update() {
         updateText();
+    }
 
-        /**
-         * TODO: add implementation of reacting on
-         * pushing on holes only for player. Add
-         * opportunity to choose direction for central
-         * hole.
-         */
+    void mouseLeftButtonReleased(Vector2f pos) {
+        if(game_end){
+            cout << "game over" << endl;
+            return;
+        }
+
+        bool ai_turned = false;
+
+        for(int i = 0; i < my_holes.size(); i++) {
+            if(my_holes[i].getGlobalBounds().contains(pos) && gs.getMyHoles()[i] != 0) {
+                if(i == 2) {
+                    float center_x = (float)my_holes[i].getGlobalBounds().left + my_holes[i].getGlobalBounds().width / 2.0f;
+                    if(pos.x > center_x) {
+                        gs.moveAsPlayer(i, Direction::Right);
+                    } else {
+                        gs.moveAsPlayer(i, Direction::Left);
+                    }
+                } else {
+                    gs.moveAsPlayer(i, Direction::Auto);
+                }
+                cout << "exec player turn" << endl;
+
+                // then it is turn of ai
+                aiTurn();
+                ai_turned = true;
+            }
+        }
+
+        if(!ai_turned && allMyZero()) {
+            aiTurn();
+        }
+
+        checkForEndState();
+    }
+
+    bool allZero(vector<int> holes) {
+        for(auto hole : holes) {
+            if(hole != 0)
+                return false;
+        }
+        return true;
+    }
+
+    bool allAiZero() {
+        return allZero(gs.getAiHoles());
+    }
+
+    bool allMyZero() {
+        return allZero(gs.getMyHoles());
+    }
+
+    void aiTurn() {
+        if(allAiZero()) {
+            game_end = true;
+        }
+
+        if(game_end) {
+            return;
+        }
+
+        int hole;
+        do {
+            hole = rand() % 5;
+        } while(gs.getAiHoles()[hole] == 0);
+
+        gs.moveAsComputer(hole, hole == 2 ? Direction(rand() % 2) : Direction::Auto);
+        cout << "exec ai turn, choosen hole=" << hole << endl;
+    }
+
+    bool checkForEndState() {
+      int c = 0;
+      for(auto hole : gs.getMyHoles()) c += hole;
+      for(auto hole : gs.getAiHoles()) c += hole;
+      if(c <= 2)
+        game_end = true;
     }
 
     void updateText() {

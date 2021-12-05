@@ -28,6 +28,9 @@ class GameState {
   int my_win_hole;
   Player next_player;
 
+  vector<bool> ai_was_changed;
+  vector<bool> my_was_changed;
+
   void moveAs(size_t hole_num, Player player, Direction dir = Direction::Auto) {
     // here do moves and check holes if can be moved to win hole
     Direction local_dir;
@@ -55,6 +58,11 @@ class GameState {
 
     for (; c > 0; c--) {
       getElemByIndexAndPlayer(i, for_me) += 1;
+      if(player == Player::Me && !for_me) {
+          ai_was_changed[i] = 1;
+      } else if(player == Player::Ai && for_me){
+          my_was_changed[i] = 1;
+      }
 
       updI(i, for_me, local_dir);
       makeIndexCorrect(i, for_me, local_dir);
@@ -65,20 +73,27 @@ class GameState {
 
   void checkForTwoOrFourToUpdateScore(Player p) {
     if (p == Me) {
-      for (auto& e : ai_holes) {
-        if (e == 2 || e == 4) {
-          my_win_hole += e;
-          e = 0;
-        }
+      for(int i = 0; i < ai_holes.size(); i++) {
+          if(ai_was_changed[i]) {
+              if(ai_holes[i] == 2 || ai_holes[i] == 4) {
+                  my_win_hole += ai_holes[i];
+                  ai_holes[i] = 0;
+              }
+          }
       }
     } else if (p == Ai) {
-      for (auto& e : my_holes) {
-        if (e == 2 || e == 4) {
-          ai_win_hole += e;
-          e = 0;
-        }
+        for(int i = 0; i < my_holes.size(); i++) {
+          if(my_was_changed[i]) {
+              if(my_holes[i] == 2 || my_holes[i] == 4) {
+                  ai_win_hole += my_holes[i];
+                  my_holes[i] = 0;
+              }
+          }
       }
     }
+
+    ai_was_changed = vector<bool>(5, 0);
+    my_was_changed = vector<bool>(5, 0);
   }
 
   int& getElemByIndexAndPlayer(int i, bool for_me) {
@@ -135,6 +150,14 @@ class GameState {
     my_win_hole = 0;
 
     next_player = Me;
+
+    ai_was_changed = vector<bool>(5, 0);
+    my_was_changed = vector<bool>(5, 0);
+  }
+
+  GameState(vector<int> ai_holes, vector<int> my_holes) : GameState() {
+    this->ai_holes = ai_holes;
+    this->my_holes = my_holes;
   }
 
   void moveAsPlayer(size_t hole_num, Direction direction = Auto) {
