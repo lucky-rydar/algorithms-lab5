@@ -20,6 +20,14 @@ enum Player {
 
 enum Direction { Right, Left, Auto };
 
+class GameState;
+
+struct Step
+{
+  int hole;
+  Direction dir;
+};
+
 class GameState {
  private:
   vector<int> ai_holes;
@@ -31,6 +39,43 @@ class GameState {
   vector<bool> ai_was_changed;
   vector<bool> my_was_changed;
 
+public:
+    int heuristic() {
+        return my_win_hole - ai_win_hole;
+    }
+
+    vector<Step> availableSteps() {
+        vector<Step> ret;
+
+        for(int i = 0; i < ai_holes.size(); i++) {
+            auto hole = ai_holes[i];
+            if(hole != 0) {
+                if(i < 2) {
+                    ret.push_back({i, Auto});
+                } else if(i > 2) {
+                    ret.push_back({i, Auto});
+                } else if(i == 2) {
+                    ret.push_back({i, Right});
+                    ret.push_back({i, Left});
+                }
+            }
+        }
+
+        return ret;
+    }
+
+    GameState& operator=(const GameState& other) {
+        this->ai_holes = other.ai_holes;
+        this->my_holes = other.my_holes;
+        this->ai_win_hole = other.ai_win_hole;
+        this->my_win_hole = other.my_win_hole;
+        this->next_player = other.next_player;
+        this->ai_was_changed = other.ai_was_changed;
+        this->my_was_changed = other.my_was_changed;
+        return *this;
+    }
+
+private:
   void moveAs(size_t hole_num, Player player, Direction dir = Direction::Auto) {
     // here do moves and check holes if can be moved to win hole
     Direction local_dir;

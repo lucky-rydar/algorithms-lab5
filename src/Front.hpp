@@ -7,6 +7,7 @@
 #include <functional>
 
 #include "GameState.hpp"
+#include "Minmax.hpp"
 
 using namespace std;
 using namespace sf;
@@ -30,12 +31,15 @@ private:
     Text right_score;
 
     sf::RectangleShape bottom_panel;
+    sf::Text heuristic_points;
+    sf::Text game_level;
 
     Font font;
 
     bool game_end = false;
+    string level;
 public:
-    Front(int x = 150, float border = -2, float font_size = 50) {
+    Front(int argc, char** argv, int x = 150, float border = -2, float font_size = 50) {
         font.loadFromFile(font_path);
 
         ai_holes = vector<sf::RectangleShape>(5, RectangleShape({x, x}));
@@ -95,6 +99,21 @@ public:
         bottom_panel.setFillColor(Color(253, 188, 94));
         bottom_panel.setOutlineThickness(border);
         bottom_panel.setOutlineColor(Color::Black);
+
+        heuristic_points.setFont(font);
+        heuristic_points.setColor(Color::Black);
+        heuristic_points.setCharacterSize(font_size * 0.8);
+        
+        game_level.setFont(font);
+        game_level.setColor(Color::Black);
+        game_level.setCharacterSize(font_size * 0.8);
+
+        if(argc != 2)
+            throw runtime_error("not enough arguments");
+        level = string(argv[1]);
+        
+        if(level != "easy" && level != "medium" && level != "hard")
+            throw runtime_error("level argument not correct (should be 'easy', 'medium' of 'hard')");
     }
 
     int exec() {
@@ -136,6 +155,9 @@ public:
                 window.draw(my_num);
             }
 
+            window.draw(heuristic_points);
+            window.draw(game_level);
+
             window.display();
         }
         return 0;
@@ -156,17 +178,19 @@ private:
 
         for(int i = 0; i < my_holes.size(); i++) {
             if(my_holes[i].getGlobalBounds().contains(pos) && gs.getMyHoles()[i] != 0) {
+                Direction dir_choose;
                 if(i == 2) {
                     float center_x = (float)my_holes[i].getGlobalBounds().left + my_holes[i].getGlobalBounds().width / 2.0f;
                     if(pos.x > center_x) {
-                        gs.moveAsPlayer(i, Direction::Right);
+                        dir_choose = Direction::Right;
                     } else {
-                        gs.moveAsPlayer(i, Direction::Left);
+                        dir_choose = Direction::Left;
                     }
+                    gs.moveAsPlayer(i, dir_choose);
                 } else {
                     gs.moveAsPlayer(i, Direction::Auto);
                 }
-                cout << "exec player turn" << endl;
+                cout << "Me: hole: " << (i) << " - " << ((dir_choose == Right) ? "Right" : (dir_choose == Left) ? "Left" : "Auto") << endl;
 
                 // then it is turn of ai
                 aiTurn();
@@ -206,13 +230,18 @@ private:
             return;
         }
 
-        int hole;
+        /*int hole;
         do {
             hole = rand() % 5;
         } while(gs.getAiHoles()[hole] == 0);
 
         gs.moveAsComputer(hole, hole == 2 ? Direction(rand() % 2) : Direction::Auto);
-        cout << "exec ai turn, choosen hole=" << hole << endl;
+        cout << "exec ai turn, choosen hole=" << hole << endl;*/
+        
+        auto step = aiDecision(gs, level);
+        cout << "Ai: hole: " << (step.hole) << " - " << ((step.dir == Right) ? "Right" : (step.dir == Left) ? "Left" : "Auto") << endl;
+        cout << endl;
+        gs.moveAsComputer(step.hole, step.dir);
     }
 
     bool checkForEndState() {
@@ -252,5 +281,17 @@ private:
             my_nums[i].setOrigin(bounds.left + bounds.width / 2.0f, bounds.top + bounds.height / 2.0f);
             my_nums[i].setPosition(rect.getPosition().x + rect.getSize().x / 2, rect.getPosition().y + rect.getSize().y / 2);
         }
+
+        // heuristic_points
+        heuristic_points.setString("Heuristic " + to_string(gs.heuristic()));
+        auto heuristic_bounds = heuristic_points.getLocalBounds();
+        heuristic_points.setOrigin(0, heuristic_bounds.top + heuristic_bounds.height / 2.0f);
+        heuristic_points.setPosition(20, bottom_panel.getPosition().y + bottom_panel.getSize().y / 6);
+
+        // game_level
+        game_level.setString("Game level " + level);
+        auto game_level_bounds = game_level.getLocalBounds();
+        game_level.setOrigin(0, game_level_bounds.top + game_level_bounds.height / 2.0f);
+        game_level.setPosition(20, bottom_panel.getPosition().y + bottom_panel.getSize().y / 6 + game_level.getLocalBounds().height);
     }
 };
