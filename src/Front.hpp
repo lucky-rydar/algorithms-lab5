@@ -198,8 +198,8 @@ private:
             }
         }
 
-        if(!ai_turned && allMyZero()) {
-            aiTurn();
+        if(allMyZero()) {
+          game_end = true;
         }
 
         checkForEndState();

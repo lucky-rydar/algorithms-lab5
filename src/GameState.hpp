@@ -44,11 +44,21 @@ public:
         return my_win_hole - ai_win_hole;
     }
 
+    void setNext(Player p) {
+      next_player = p;
+    }
+
     vector<Step> availableSteps() {
         vector<Step> ret;
 
         for(int i = 0; i < ai_holes.size(); i++) {
-            auto hole = ai_holes[i];
+            int hole;
+            if(next_player == Ai) {
+              hole = ai_holes[i];
+            } else if(next_player == Me) {
+              hole = my_holes[i];
+            }
+
             if(hole != 0) {
                 if(i < 2) {
                     ret.push_back({i, Auto});
@@ -75,8 +85,31 @@ public:
         return *this;
     }
 
+    void checkForAvailabilityHole(size_t hole_num, Player p) {
+      if(p == Me) {
+        // check ai
+        if(my_holes[hole_num] == 0 || my_holes[hole_num] > 50) {
+          throw runtime_error("not available");
+        }
+      } else if(p == Ai) {
+        // check my
+        if(ai_holes[hole_num] == 0 || ai_holes[hole_num] > 50) {
+          throw runtime_error("not available");
+        }
+      }
+    }
+
 private:
   void moveAs(size_t hole_num, Player player, Direction dir = Direction::Auto) {
+    try {
+      checkForAvailabilityHole(hole_num, player);
+    } catch(const std::exception& e) {
+      std::cerr << e.what() << '\n';
+      cout << "hole: " << hole_num << endl
+           << "balls: " << ((player == Me) ? my_holes[hole_num] : ai_holes[hole_num]) << endl
+           << "dir: " << dir << endl;
+    }
+
     // here do moves and check holes if can be moved to win hole
     Direction local_dir;
     if (hole_num == 2) {
