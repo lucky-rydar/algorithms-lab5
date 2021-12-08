@@ -26,13 +26,6 @@ vector<GameState> do_steps(GameState src, vector<Step> steps) {
     GameState temp;
     temp = src;
     temp.moveNext(step.hole, step.dir);
-
-    // DELETE ME!
-    // for(auto item: temp.getAiHoles()) cout << item << " ";
-    // cout << endl;
-    // for(auto item: temp.getMyHoles()) cout << item << " ";
-    // cout << endl << endl;
-
     ret.push_back(temp);
   }
   return ret;
@@ -81,9 +74,9 @@ alphabeta_ret alphabeta(node_t node, Step done_step, int depth, int a, int b,
         res = alphabeta(childs[i], done_step, depth - 1, a, b, false, false);
       }
       value = max(value, res);
-      int a = max(a, value.heuristic);
+      a = max(a, value.heuristic);
       if (a >= b) {
-        continue;
+        break;
       }
     }
     return value;
@@ -92,8 +85,6 @@ alphabeta_ret alphabeta(node_t node, Step done_step, int depth, int a, int b,
     auto steps = node.availableSteps();
     auto childs = do_steps(node, steps);
     for (int i = 0; i < steps.size(); i++) {
-      // alphabeta_ret res = alphabeta(childs[i], steps[i], depth-1, a, b, true,
-      // false);
       alphabeta_ret res;
       if (first_call) {
         res = alphabeta(childs[i], steps[i], depth - 1, a, b, true, false);
@@ -102,9 +93,9 @@ alphabeta_ret alphabeta(node_t node, Step done_step, int depth, int a, int b,
       }
 
       value = min(value, res);
-      int b = min(b, value.heuristic);
+      b = min(b, value.heuristic);
       if (b <= a) {
-        continue;
+        break;
       }
     }
     return value;
