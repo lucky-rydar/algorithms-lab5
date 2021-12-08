@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "GameState.hpp"
 #include "Front.hpp"
+#include "GameState.hpp"
 
 using namespace std;
 
